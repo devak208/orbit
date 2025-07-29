@@ -10,8 +10,8 @@ import sys
 import os
 from datetime import datetime
 
-# Get base URL from environment
-BASE_URL = "https://7c12ba61-fbeb-4790-b162-e04bdc2457d1.preview.emergentagent.com/api"
+# Get base URL from environment - using localhost for testing since external routing has issues
+BASE_URL = "http://localhost:3000/api"
 
 class ProjectManagementAPITester:
     def __init__(self):
