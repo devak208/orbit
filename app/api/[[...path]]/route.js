@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 
 // MongoDB connection
 let client
@@ -38,47 +39,229 @@ async function handleRoute(request, { params }) {
   try {
     const db = await connectToMongo()
 
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
-    if (route === '/root' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
-    }
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
+    // Root endpoint
     if (route === '/' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
+      return handleCORS(NextResponse.json({ message: "Project Management API" }))
     }
 
-    // Status endpoints - POST /api/status
-    if (route === '/status' && method === 'POST') {
-      const body = await request.json()
+    // Authentication routes
+    if (route === '/auth/register' && method === 'POST') {
+      const { name, email, password } = await request.json()
       
-      if (!body.client_name) {
+      if (!name || !email || !password) {
         return handleCORS(NextResponse.json(
-          { error: "client_name is required" }, 
+          { error: 'Name, email and password are required' }, 
           { status: 400 }
         ))
       }
 
-      const statusObj = {
-        id: uuidv4(),
-        client_name: body.client_name,
-        timestamp: new Date()
+      // Check if user already exists
+      const existingUser = await db.collection('users').findOne({ email })
+      if (existingUser) {
+        return handleCORS(NextResponse.json(
+          { error: 'User already exists' }, 
+          { status: 400 }
+        ))
       }
 
-      await db.collection('status_checks').insertOne(statusObj)
-      return handleCORS(NextResponse.json(statusObj))
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 12)
+
+      // Create user
+      const user = {
+        id: uuidv4(),
+        name,
+        email,
+        password: hashedPassword,
+        role: 'user',
+        avatar: null,
+        createdAt: new Date()
+      }
+
+      await db.collection('users').insertOne(user)
+      
+      // Remove password from response
+      const { password: _, ...userResponse } = user
+      return handleCORS(NextResponse.json({ user: userResponse }))
     }
 
-    // Status endpoints - GET /api/status
-    if (route === '/status' && method === 'GET') {
-      const statusChecks = await db.collection('status_checks')
-        .find({})
-        .limit(1000)
-        .toArray()
-
-      // Remove MongoDB's _id field from response
-      const cleanedStatusChecks = statusChecks.map(({ _id, ...rest }) => rest)
+    if (route === '/auth/login' && method === 'POST') {
+      const { email, password } = await request.json()
       
-      return handleCORS(NextResponse.json(cleanedStatusChecks))
+      if (!email || !password) {
+        return handleCORS(NextResponse.json(
+          { error: 'Email and password are required' }, 
+          { status: 400 }
+        ))
+      }
+
+      // Find user
+      const user = await db.collection('users').findOne({ email })
+      if (!user) {
+        return handleCORS(NextResponse.json(
+          { error: 'Invalid credentials' }, 
+          { status: 401 }
+        ))
+      }
+
+      // Check password
+      const isValid = await bcrypt.compare(password, user.password)
+      if (!isValid) {
+        return handleCORS(NextResponse.json(
+          { error: 'Invalid credentials' }, 
+          { status: 401 }
+        ))
+      }
+
+      // Remove password from response
+      const { password: _, ...userResponse } = user
+      return handleCORS(NextResponse.json({ user: userResponse }))
+    }
+
+    // Projects routes
+    if (route === '/projects' && method === 'GET') {
+      const { userId } = Object.fromEntries(new URL(request.url).searchParams)
+      
+      if (!userId) {
+        return handleCORS(NextResponse.json(
+          { error: 'User ID is required' }, 
+          { status: 400 }
+        ))
+      }
+
+      // Get projects where user is owner or member
+      const projects = await db.collection('projects').find({
+        $or: [
+          { ownerId: userId },
+          { 'members.userId': userId }
+        ]
+      }).toArray()
+
+      const cleanedProjects = projects.map(({ _id, ...rest }) => rest)
+      return handleCORS(NextResponse.json(cleanedProjects))
+    }
+
+    if (route === '/projects' && method === 'POST') {
+      const { name, description, ownerId } = await request.json()
+      
+      if (!name || !ownerId) {
+        return handleCORS(NextResponse.json(
+          { error: 'Name and owner ID are required' }, 
+          { status: 400 }
+        ))
+      }
+
+      const project = {
+        id: uuidv4(),
+        name,
+        description: description || '',
+        ownerId,
+        members: [],
+        settings: {
+          visibility: 'private'
+        },
+        createdAt: new Date()
+      }
+
+      await db.collection('projects').insertOne(project)
+      return handleCORS(NextResponse.json(project))
+    }
+
+    // Tasks routes
+    if (route === '/tasks' && method === 'GET') {
+      const { projectId } = Object.fromEntries(new URL(request.url).searchParams)
+      
+      if (!projectId) {
+        return handleCORS(NextResponse.json(
+          { error: 'Project ID is required' }, 
+          { status: 400 }
+        ))
+      }
+
+      const tasks = await db.collection('tasks').find({ projectId }).toArray()
+      const cleanedTasks = tasks.map(({ _id, ...rest }) => rest)
+      return handleCORS(NextResponse.json(cleanedTasks))
+    }
+
+    if (route === '/tasks' && method === 'POST') {
+      const { title, description, projectId, status, priority, assigneeId } = await request.json()
+      
+      if (!title || !projectId) {
+        return handleCORS(NextResponse.json(
+          { error: 'Title and project ID are required' }, 
+          { status: 400 }
+        ))
+      }
+
+      const task = {
+        id: uuidv4(),
+        title,
+        description: description || '',
+        projectId,
+        status: status || 'todo',
+        priority: priority || 'medium',
+        assigneeId: assigneeId || null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      await db.collection('tasks').insertOne(task)
+      return handleCORS(NextResponse.json(task))
+    }
+
+    if (route.startsWith('/tasks/') && method === 'PUT') {
+      const taskId = route.split('/')[2]
+      const updates = await request.json()
+      
+      if (!taskId) {
+        return handleCORS(NextResponse.json(
+          { error: 'Task ID is required' }, 
+          { status: 400 }
+        ))
+      }
+
+      const updatedTask = {
+        ...updates,
+        updatedAt: new Date()
+      }
+
+      const result = await db.collection('tasks').updateOne(
+        { id: taskId },
+        { $set: updatedTask }
+      )
+
+      if (result.matchedCount === 0) {
+        return handleCORS(NextResponse.json(
+          { error: 'Task not found' }, 
+          { status: 404 }
+        ))
+      }
+
+      const task = await db.collection('tasks').findOne({ id: taskId })
+      const { _id, ...cleanedTask } = task
+      return handleCORS(NextResponse.json(cleanedTask))
+    }
+
+    if (route.startsWith('/tasks/') && method === 'DELETE') {
+      const taskId = route.split('/')[2]
+      
+      if (!taskId) {
+        return handleCORS(NextResponse.json(
+          { error: 'Task ID is required' }, 
+          { status: 400 }
+        ))
+      }
+
+      const result = await db.collection('tasks').deleteOne({ id: taskId })
+
+      if (result.deletedCount === 0) {
+        return handleCORS(NextResponse.json(
+          { error: 'Task not found' }, 
+          { status: 404 }
+        ))
+      }
+
+      return handleCORS(NextResponse.json({ message: 'Task deleted successfully' }))
     }
 
     // Route not found
