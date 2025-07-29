@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Testing for Project Management System
-Tests all authentication, project, and task management endpoints
+Enhanced Backend API Testing for Advanced Project Management System
+Tests all enhanced features including role-based auth, team management, invitations, 
+advanced task management with comments, tags, and activity logging
 """
 
 import requests
 import json
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Get base URL from environment - using localhost for testing since external routing has issues
 BASE_URL = "http://localhost:3000/api"
