@@ -1,0 +1,394 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  username      String?   @unique
+  password      String?
+  bio           String?
+  role          Role      @default(USER)
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Authentication
+  accounts Account[]
+  sessions Session[]
+
+  // Project relationships
+  ownedProjects     Project[]       @relation("ProjectOwner")
+  projectMembers    ProjectMember[]
+  assignedTasks     Task[]          @relation("TaskAssignee")
+  createdTasks      Task[]          @relation("TaskCreator")
+  taskComments      TaskComment[]
+  activities        Activity[]
+  notifications     Notification[]
+  invitations       Invitation[]
+  notes             Note[]
+  
+  // Inbox
+  inboxItems        InboxItem[]
+  readInboxItems    InboxItemRead[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Project Management
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  icon        String?
+  color       String?
+  isPublic    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relationships
+  ownerId     String
+  owner       User             @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     ProjectMember[]
+  tasks       Task[]
+  labels      Label[]
+  activities  Activity[]
+  invitations Invitation[]
+  notes       Note[]
+  
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String      @id @default(cuid())
+  role      ProjectRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+  
+  // Relationships
+  userId    String
+  projectId String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, projectId])
+  @@map("project_members")
+}
+
+model Invitation {
+  id        String           @id @default(cuid())
+  email     String
+  role      ProjectRole      @default(MEMBER)
+  status    InvitationStatus @default(PENDING)
+  token     String           @unique @default(cuid())
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+  
+  // Relationships
+  projectId   String
+  inviterId   String
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  inviter     User    @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  
+  @@map("invitations")
+}
+
+// Task Management
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+  completedAt DateTime?
+  position    Float      @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  // Relationships
+  projectId   String
+  creatorId   String
+  assigneeId  String?
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator     User          @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  assignee    User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  labels      TaskLabel[]
+  comments    TaskComment[]
+  attachments TaskAttachment[]
+  activities  Activity[]
+  
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  taskId    String
+  authorId  String
+  task      Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  @@map("task_comments")
+}
+
+model TaskAttachment {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String
+  size      Int
+  mimetype  String
+  createdAt DateTime @default(now())
+  
+  // Relationships
+  taskId    String
+  task      Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  @@map("task_attachments")
+}
+
+// Labels
+model Label {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  createdAt DateTime @default(now())
+  
+  // Relationships
+  projectId String
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     TaskLabel[]
+  
+  @@unique([projectId, name])
+  @@map("labels")
+}
+
+model TaskLabel {
+  id      String @id @default(cuid())
+  
+  // Relationships
+  taskId  String
+  labelId String
+  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  
+  @@unique([taskId, labelId])
+  @@map("task_labels")
+}
+
+// Activity Feed
+model Activity {
+  id        String       @id @default(cuid())
+  type      ActivityType
+  content   String
+  metadata  Json?
+  createdAt DateTime     @default(now())
+  
+  // Relationships
+  userId    String
+  projectId String?
+  taskId    String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  @@map("activities")
+}
+
+// Notifications
+model Notification {
+  id        String           @id @default(cuid())
+  title     String
+  content   String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  
+  // Relationships
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("notifications")
+}
+
+// Notes and Documentation
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  authorId  String
+  projectId String?
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("notes")
+}
+
+// Inbox System
+model InboxItem {
+  id        String           @id @default(cuid())
+  title     String
+  content   String
+  type      InboxItemType
+  status    InboxItemStatus  @default(ACTIVE)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  
+  // Relationships
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reads     InboxItemRead[]
+  
+  @@map("inbox_items")
+}
+
+model InboxItemRead {
+  id       String   @id @default(cuid())
+  readAt   DateTime @default(now())
+  
+  // Relationships
+  userId      String
+  inboxItemId String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inboxItem   InboxItem @relation(fields: [inboxItemId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, inboxItemId])
+  @@map("inbox_item_reads")
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum ActivityType {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_COMPLETED
+  TASK_ASSIGNED
+  TASK_COMMENTED
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  MEMBER_JOINED
+  MEMBER_LEFT
+  MEMBER_UPDATED
+  MEMBER_REMOVED
+  LABEL_CREATED
+  NOTE_CREATED
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_MENTIONED
+  PROJECT_INVITATION
+  TASK_DUE_SOON
+  TASK_OVERDUE
+  COMMENT_ADDED
+  PROJECT_UPDATED
+}
+
+enum InboxItemType {
+  TASK_ASSIGNMENT
+  MENTION
+  PROJECT_INVITATION
+  TASK_UPDATE
+  COMMENT
+  SYSTEM
+}
+
+enum InboxItemStatus {
+  ACTIVE
+  READ
+  ARCHIVED
+  DELETED
+}

@@ -1,15 +1,15 @@
-import './globals.css'
+'use client'
 
-export const metadata = {
-  title: 'Project Hub - Modern Project Management',
-  description: 'A beautiful, modern project management system inspired by Linear',
-}
+import './globals.css'
+import { SessionProvider } from 'next-auth/react'
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   )
