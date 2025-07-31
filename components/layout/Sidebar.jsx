@@ -14,7 +14,7 @@ import {
   CheckSquare, 
   Calendar, 
   Users, 
-  FileText, 
+  Brush, 
   Inbox, 
   Settings,
   ChevronLeft,
@@ -136,9 +136,9 @@ export function Sidebar({ collapsed, onToggle, currentPath }) {
       label: 'Team',
     },
     {
-      href: `/dashboard/projects/${currentProject.id}/notes`,
-      icon: FileText,
-      label: 'Notes',
+      href: `/dashboard/projects/${currentProject.id}/workspace`,
+      icon: Brush,
+      label: 'Workspace',
     },
   ] : []
 

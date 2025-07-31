@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ArrowLeft, Settings, Users, CheckCircle, Clock, Calendar } from 'lucide-react'
+import ProjectActivity from '@/components/project/ProjectActivity'
 
 export default function ProjectDetailPage() {
   const router = useRouter()
@@ -277,7 +278,7 @@ export default function ProjectDetailPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Coming soon...</p>
+              <ProjectActivity projectId={params.id} />
             </CardContent>
           </Card>
         </TabsContent>

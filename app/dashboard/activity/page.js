@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -21,14 +22,17 @@ export default function ActivityPage() {
   const [activities, setActivities] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
+  const searchParams = useSearchParams()
+  const projectId = searchParams.get('projectId')
 
   useEffect(() => {
     fetchActivities()
-  }, [])
+  }, [projectId])
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch('/api/activity')
+      const url = projectId ? `/api/activity?projectId=${projectId}` : '/api/activity'
+      const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
         setActivities(data.activities)
@@ -58,6 +62,12 @@ export default function ActivityPage() {
         return <Edit className="h-4 w-4 text-blue-600" />
       case 'MEMBER_ADDED':
         return <Users className="h-4 w-4 text-green-600" />
+      case 'WORKSPACE_CREATED':
+        return <Plus className="h-4 w-4 text-green-600" />
+      case 'WORKSPACE_UPDATED':
+        return <Edit className="h-4 w-4 text-blue-600" />
+      case 'WORKSPACE_DELETED':
+        return <Trash2 className="h-4 w-4 text-red-600" />
       default:
         return <ActivityIcon className="h-4 w-4 text-gray-600" />
     }
@@ -68,12 +78,15 @@ export default function ActivityPage() {
       case 'TASK_CREATED':
       case 'TASK_COMPLETED':
       case 'MEMBER_ADDED':
+      case 'WORKSPACE_CREATED':
         return 'bg-green-50 border-green-200'
       case 'TASK_UPDATED':
       case 'PROJECT_CREATED':
       case 'PROJECT_UPDATED':
+      case 'WORKSPACE_UPDATED':
         return 'bg-blue-50 border-blue-200'
       case 'TASK_DELETED':
+      case 'WORKSPACE_DELETED':
         return 'bg-red-50 border-red-200'
       case 'COMMENT_ADDED':
         return 'bg-purple-50 border-purple-200'
@@ -116,9 +129,14 @@ export default function ActivityPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Activity</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {projectId ? 'Project Activity' : 'Activity'}
+          </h1>
           <p className="text-muted-foreground">
-            Track all activities across your projects and tasks.
+            {projectId 
+              ? 'Track activities for this specific project.'
+              : 'Track all activities across your projects and tasks.'
+            }
           </p>
         </div>
       </div>

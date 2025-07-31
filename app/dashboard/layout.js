@@ -40,8 +40,8 @@ export default function DashboardLayout({ children }) {
       )}>
         <TopBar user={session?.user} />
         
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
+        <main className={pathname.includes('/workspace') ? 'flex-1 overflow-hidden' : 'flex-1 overflow-auto'}>
+          <div className={pathname.includes('/workspace') ? 'h-full' : 'p-6'}>
             {children}
           </div>
         </main>

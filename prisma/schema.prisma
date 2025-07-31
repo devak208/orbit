@@ -43,6 +43,9 @@ model User {
   // Inbox
   inboxItems        InboxItem[]
   readInboxItems    InboxItemRead[]
+  
+  // Workspaces
+  createdWorkspaces Workspace[]
 
   @@map("users")
 }
@@ -106,6 +109,7 @@ model Project {
   activities  Activity[]
   invitations Invitation[]
   notes       Note[]
+  workspaces  Workspace[]
   
   @@map("projects")
 }
@@ -284,6 +288,23 @@ model Note {
   @@map("notes")
 }
 
+// Workspace for drawing/diagramming
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  data      Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  projectId String
+  creatorId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator   User    @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  @@map("workspaces")
+}
+
 // Inbox System
 model InboxItem {
   id        String           @id @default(cuid())
@@ -365,6 +386,9 @@ enum ActivityType {
   MEMBER_REMOVED
   LABEL_CREATED
   NOTE_CREATED
+  WORKSPACE_CREATED
+  WORKSPACE_UPDATED
+  WORKSPACE_DELETED
 }
 
 enum NotificationType {
