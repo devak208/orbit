@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
+import { LoadingPage } from '@/components/ui/loading'
 import { cn } from '@/lib/utils'
 
 export default function DashboardLayout({ children }) {
@@ -14,11 +15,7 @@ export default function DashboardLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   if (status === 'loading') {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    )
+    return <LoadingPage>Loading your workspace...</LoadingPage>
   }
 
   if (status === 'unauthenticated') {
@@ -27,7 +24,7 @@ export default function DashboardLayout({ children }) {
   }
 
   return (
-    <div className="h-screen flex bg-gray-50">
+    <div className="h-screen flex bg-background">
       <Sidebar 
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}

@@ -24,6 +24,7 @@ import {
   List,
   ListOrdered
 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/loading'
 
 const EditorToolbar = ({ editor }) => {
   if (!editor) return null
@@ -197,15 +198,49 @@ export default function ProjectNotesPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="grid grid-cols-4 gap-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-6 w-6 rounded-sm" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-28" />
+        </div>
+        
+        {/* Notes Layout Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar Skeleton */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-6 w-8" />
+            </div>
             <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-16 bg-gray-200 rounded"></div>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="border rounded-xl p-4 space-y-2">
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
               ))}
             </div>
-            <div className="col-span-3 h-96 bg-gray-200 rounded"></div>
+          </div>
+          
+          {/* Editor Skeleton */}
+          <div className="lg:col-span-3">
+            <div className="border rounded-xl">
+              <div className="p-4 border-b">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              </div>
+              <div className="p-4">
+                <Skeleton className="h-96 w-full" />
+              </div>
+            </div>
           </div>
         </div>
       </div>

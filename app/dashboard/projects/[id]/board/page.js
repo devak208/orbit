@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Plus, MoreHorizontal, Filter, ChevronDown } from 'lucide-react'
+import { TableSkeleton } from '@/components/ui/loading'
 
 export default function ProjectBoardPage() {
   const params = useParams()
@@ -188,39 +189,23 @@ export default function ProjectBoardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="h-6 w-6 bg-gray-200 rounded"></div>
-              <div>
-                <div className="h-8 bg-gray-200 rounded w-48 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-24"></div>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <div className="h-9 bg-gray-200 rounded w-20"></div>
-              <div className="h-9 bg-gray-200 rounded w-24"></div>
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 bg-muted/50 rounded animate-pulse"></div>
+            <div className="space-y-2">
+              <div className="h-8 bg-muted/50 rounded w-48 animate-pulse"></div>
+              <div className="h-4 bg-muted/50 rounded w-24 animate-pulse"></div>
             </div>
           </div>
-          <div className="border rounded-lg">
-            <div className="p-4 border-b">
-              <div className="grid grid-cols-6 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="h-4 bg-gray-200 rounded"></div>
-                ))}
-              </div>
-            </div>
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="p-4 border-b last:border-b-0">
-                <div className="grid grid-cols-6 gap-4">
-                  {[...Array(6)].map((_, j) => (
-                    <div key={j} className="h-4 bg-gray-200 rounded"></div>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="flex gap-2">
+            <div className="h-10 bg-muted/50 rounded w-20 animate-pulse"></div>
+            <div className="h-10 bg-muted/50 rounded w-24 animate-pulse"></div>
           </div>
         </div>
+        
+        {/* Table Skeleton */}
+        <TableSkeleton rows={8} columns={6} />
       </div>
     )
   }

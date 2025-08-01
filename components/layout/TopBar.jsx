@@ -38,11 +38,15 @@ import {
   Command as CommandIcon,
   Hash,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Sun,
+  Moon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/contexts/ThemeContext'
 
 export function TopBar({ user }) {
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -137,7 +141,7 @@ export function TopBar({ user }) {
   }
 
   return (
-    <header className="h-16 border-b bg-white px-6 flex items-center justify-between">
+    <header className="h-16 border-b bg-background px-6 flex items-center justify-between">
       <div className="flex items-center flex-1 max-w-md">
         <Popover open={searchOpen} onOpenChange={setSearchOpen}>
           <PopoverTrigger asChild>
@@ -200,8 +204,15 @@ export function TopBar({ user }) {
           <Plus className="h-4 w-4 mr-2" />
           New Project
         </Button>
-
-        {/* Notifications */}
+        
+        {/* Theme Toggler */}
+        <Button variant="ghost" size="sm" onClick={toggleTheme} className="h-8 w-8 p-0">
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="relative">

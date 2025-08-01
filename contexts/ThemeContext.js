@@ -19,7 +19,7 @@ export const useTheme = () => {
 }
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light')
+  const [theme, setTheme] = useState('dark') // Default to dark theme
 
   useEffect(() => {
     // Load theme from localStorage on mount
@@ -27,9 +27,8 @@ export const ThemeProvider = ({ children }) => {
     if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
       setTheme(savedTheme)
     } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      setTheme(prefersDark ? 'dark' : 'light')
+      // Default to dark theme like Linear
+      setTheme('dark')
     }
   }, [])
 

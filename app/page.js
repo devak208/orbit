@@ -1,27 +1,24 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import React from 'react'
+import HeroSection from '@/components/landing/HeroSection'
+import FeaturesSection from '@/components/landing/FeaturesSection'
+import PricingSection from '@/components/landing/PricingSection'
+import TestimonialsSection from '@/components/landing/TestimonialsSection'
+import CTASection from '@/components/landing/CTASection'
+import Footer from '@/components/landing/Footer'
+import Navbar from '@/components/landing/Navbar'
 
-export default function HomePage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (status === 'loading') return // Still loading
-
-    if (session) {
-      router.push('/dashboard')
-    } else {
-      router.push('/auth/signin')
-    }
-  }, [session, status, router])
-
-  // Show loading spinner while redirecting
+export default function LandingPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <HeroSection />
+      <FeaturesSection />
+      <PricingSection />
+      <TestimonialsSection />
+      <CTASection />
+      <Footer />
     </div>
   )
 }

@@ -162,7 +162,7 @@ export function Sidebar({ collapsed, onToggle, currentPath }) {
 
   return (
     <div className={cn(
-      "fixed left-0 top-0 z-50 h-full bg-white border-r transition-all duration-300",
+      "fixed left-0 top-0 z-50 h-full bg-sidebar border-sidebar-border border-r transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
       <div className="flex h-full flex-col">

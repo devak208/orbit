@@ -17,6 +17,7 @@ import {
   FolderPlus,
   Clock
 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/loading'
 
 export default function ActivityPage() {
   const [activities, setActivities] = useState([])
@@ -79,19 +80,19 @@ export default function ActivityPage() {
       case 'TASK_COMPLETED':
       case 'MEMBER_ADDED':
       case 'WORKSPACE_CREATED':
-        return 'bg-green-50 border-green-200'
+        return 'bg-green-50/50 dark:bg-green-950/20 border-green-200/50 dark:border-green-800/30'
       case 'TASK_UPDATED':
       case 'PROJECT_CREATED':
       case 'PROJECT_UPDATED':
       case 'WORKSPACE_UPDATED':
-        return 'bg-blue-50 border-blue-200'
+        return 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200/50 dark:border-blue-800/30'
       case 'TASK_DELETED':
       case 'WORKSPACE_DELETED':
-        return 'bg-red-50 border-red-200'
+        return 'bg-red-50/50 dark:bg-red-950/20 border-red-200/50 dark:border-red-800/30'
       case 'COMMENT_ADDED':
-        return 'bg-purple-50 border-purple-200'
+        return 'bg-purple-50/50 dark:bg-purple-950/20 border-purple-200/50 dark:border-purple-800/30'
       default:
-        return 'bg-gray-50 border-gray-200'
+        return 'bg-muted/30 border-border'
     }
   }
 
@@ -112,13 +113,52 @@ export default function ActivityPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
-            ))}
-          </div>
+        {/* Header Skeleton */}
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+        
+        {/* Tabs Skeleton */}
+        <div className="flex gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-24" />
+          ))}
+        </div>
+        
+        {/* Activity Items Skeleton */}
+        <div className="space-y-8">
+          {Array.from({ length: 2 }).map((_, dayIndex) => (
+            <div key={dayIndex} className="space-y-4">
+              {/* Date Header */}
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              
+              {/* Activity Cards */}
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="border rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-4 w-4 mt-1" />
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-6 w-6 rounded-full" />
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-40" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-5 w-16" />
+                          <Skeleton className="h-3 w-12" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     )

@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ArrowLeft, Settings, Users, CheckCircle, Clock, Calendar } from 'lucide-react'
 import ProjectActivity from '@/components/project/ProjectActivity'
+import { Skeleton } from '@/components/ui/loading'
 
 export default function ProjectDetailPage() {
   const router = useRouter()
@@ -48,9 +49,66 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-8 w-32" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-6 w-6 rounded-sm" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-48" />
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-16" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <Skeleton className="h-8 w-24" />
+        </div>
+        
+        {/* Stats Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="border rounded-xl p-6 space-y-4">
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </div>
+              <Skeleton className="h-8 w-16" />
+            </div>
+          ))}
+        </div>
+        
+        {/* Tabs Skeleton */}
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-24" />
+            ))}
+          </div>
+          
+          {/* Content Skeleton */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="border rounded-xl">
+                <div className="p-6 border-b">
+                  <Skeleton className="h-6 w-48" />
+                </div>
+                <div className="p-6 space-y-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-1/2" />
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )

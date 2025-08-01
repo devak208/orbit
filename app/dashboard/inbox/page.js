@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Check, Mail, Archive, Trash2, Inbox as InboxIcon, Circle, CheckCircle, XCircle } from 'lucide-react'
+import { Skeleton } from '@/components/ui/loading'
 
 export default function InboxPage() {
   const [inboxItems, setInboxItems] = useState([])
@@ -121,8 +122,18 @@ export default function InboxPage() {
         <CardContent className="p-0">
           {loading ? (
             <div className="p-6 space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-gray-200 rounded animate-pulse"></div>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-4 p-4">
+                  <Skeleton className="h-5 w-5 mt-1" />
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                </div>
               ))}
             </div>
           ) : inboxItems.length === 0 ? (

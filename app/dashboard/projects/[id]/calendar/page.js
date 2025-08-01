@@ -14,8 +14,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar as CalendarIcon, Filter, Plus } from 'lucide-react'
+import { Plus, Calendar as CalendarIcon, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Skeleton } from '@/components/ui/loading'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
+import './calendar-theme.css'
 
 const locales = {
   'en-US': enUS,
@@ -130,37 +132,7 @@ export default function ProjectCalendarPage() {
     setTaskDetailsOpen(true)
   }
 
-  const handleSelectSlot = ({ start, end }) => {
-    setNewTaskData({ ...newTaskData, dueDate: start })
-    setCreateTaskOpen(true)
-  }
 
-  const handleCreateTask = async () => {
-    if (!newTaskData.title.trim()) return
-    
-    try {
-      const response = await fetch(`/api/projects/${params.id}/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTaskData)
-      })
-      
-      if (response.ok) {
-        const { task } = await response.json()
-        setTasks([...tasks, task])
-        setCreateTaskOpen(false)
-        setNewTaskData({
-          title: '',
-          description: '',
-          dueDate: null,
-          priority: 'MEDIUM',
-          status: 'TODO'
-        })
-      }
-    } catch (error) {
-      console.error('Error creating task:', error)
-    }
-  }
 
   const handleUpdateTaskStatus = async (taskId, newStatus) => {
     try {
@@ -193,12 +165,110 @@ export default function ProjectCalendarPage() {
     </div>
   )
 
+  const CustomToolbar = ({ label, onNavigate, onView, view }) => {
+    const viewOptions = [
+      { value: 'month', label: 'Month' },
+      { value: 'week', label: 'Week' },
+      { value: 'day', label: 'Day' },
+      { value: 'agenda', label: 'Agenda' }
+    ]
+
+    return (
+      <div className="flex items-center justify-between mb-4 p-4 border-b border-border">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onNavigate('PREV')}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onNavigate('TODAY')}
+            className="px-3 h-8"
+          >
+            Today
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onNavigate('NEXT')}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <h2 className="text-lg font-semibold">{label}</h2>
+        
+        <div className="flex items-center gap-1">
+          {viewOptions.map(({ value, label }) => (
+            <Button
+              key={value}
+              variant={view === value ? "default" : "outline"}
+              size="sm"
+              onClick={() => onView(value)}
+              className="px-3 h-8"
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-6 w-6 rounded-sm" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </div>
+        
+        {/* Stats Cards Skeleton */}
+        <div className="grid gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="border rounded-xl p-6 space-y-4">
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Calendar Skeleton */}
+        <div className="border rounded-lg">
+          <div className="p-4 border-b">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-6 w-32" />
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-8 w-16" />
+              </div>
+            </div>
+          </div>
+          <Skeleton className="h-96 w-full" />
         </div>
       </div>
     )
@@ -243,11 +313,6 @@ export default function ProjectCalendarPage() {
               <SelectItem value="DONE">Done</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Button onClick={() => setCreateTaskOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Task
-          </Button>
         </div>
       </div>
 
@@ -361,10 +426,9 @@ export default function ProjectCalendarPage() {
               onNavigate={setDate}
               eventPropGetter={eventStyleGetter}
               onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              selectable
               components={{
-                event: CustomEvent
+                event: CustomEvent,
+                toolbar: CustomToolbar
               }}
               views={['month', 'week', 'day', 'agenda']}
               popup
@@ -376,76 +440,6 @@ export default function ProjectCalendarPage() {
         </CardContent>
       </Card>
 
-      {/* Create Task Dialog */}
-      <Dialog open={createTaskOpen} onOpenChange={setCreateTaskOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Task</DialogTitle>
-            <DialogDescription>
-              Create a new task {newTaskData.dueDate && `due on ${format(new Date(newTaskData.dueDate), 'PP')}`}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Task Title</Label>
-              <Input
-                placeholder="Enter task title"
-                value={newTaskData.title}
-                onChange={(e) => setNewTaskData({ ...newTaskData, title: e.target.value })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                placeholder="Enter task description (optional)"
-                value={newTaskData.description}
-                onChange={(e) => setNewTaskData({ ...newTaskData, description: e.target.value })}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Select value={newTaskData.priority} onValueChange={(value) => setNewTaskData({ ...newTaskData, priority: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LOW">Low</SelectItem>
-                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                    <SelectItem value="HIGH">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={newTaskData.status} onValueChange={(value) => setNewTaskData({ ...newTaskData, status: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TODO">To Do</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="DONE">Done</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateTaskOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateTask} disabled={!newTaskData.title.trim()}>
-              Create Task
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Task Details Dialog */}
       <Dialog open={taskDetailsOpen} onOpenChange={setTaskDetailsOpen}>

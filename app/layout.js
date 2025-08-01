@@ -2,10 +2,22 @@
 
 import './globals.css'
 import { SessionProvider } from 'next-auth/react'
+import { ThemeProvider } from '@/contexts/ThemeContext'
+import { useTheme } from '@/contexts/ThemeContext'
 
-export default function RootLayout({ children }) {
+function ThemeWrapper({ children }) {
   return (
-    <html lang="en">
+    <ThemeProvider>
+      <ThemeContent>{children}</ThemeContent>
+    </ThemeProvider>
+  )
+}
+
+function ThemeContent({ children }) {
+  const { theme } = useTheme()
+  
+  return (
+    <html lang="en" className={theme}>
       <body className="antialiased">
         <SessionProvider>
           {children}
@@ -13,4 +25,8 @@ export default function RootLayout({ children }) {
       </body>
     </html>
   )
+}
+
+export default function RootLayout({ children }) {
+  return <ThemeWrapper>{children}</ThemeWrapper>
 }

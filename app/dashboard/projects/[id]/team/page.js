@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { UserPlus, MoreHorizontal, Mail, Crown, Shield, User, Trash2 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/loading'
 
 export default function ProjectTeamPage() {
   const params = useParams()
@@ -155,22 +156,75 @@ export default function ProjectTeamPage() {
   const getRoleBadgeColor = (role) => {
     switch (role) {
       case 'OWNER':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+        return 'bg-yellow-50/50 dark:bg-yellow-950/20 text-yellow-900 dark:text-yellow-100 border-yellow-200/50 dark:border-yellow-800/30'
       case 'ADMIN':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
+        return 'bg-blue-50/50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-100 border-blue-200/50 dark:border-blue-800/30'
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+        return 'bg-muted/30 text-foreground border-border'
     }
   }
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-6 w-6 rounded-sm" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        
+        {/* Team Members Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-10 w-28" />
+          </div>
+          
+          {/* Member Cards */}
           <div className="grid gap-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="border rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Pending Invitations Section */}
+        <div className="space-y-4">
+          <Skeleton className="h-6 w-40" />
+          <div className="grid gap-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="border rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -318,7 +372,7 @@ export default function ProjectTeamPage() {
           <CardContent>
             <div className="space-y-4">
               {invitations.map((invitation) => (
-                <div key={invitation.id} className="flex items-center justify-between p-4 border rounded-lg bg-yellow-50">
+                <div key={invitation.id} className="flex items-center justify-between p-4 border rounded-lg bg-yellow-50/30 dark:bg-yellow-950/20">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-12 w-12">
                       <AvatarFallback>
@@ -338,7 +392,7 @@ export default function ProjectTeamPage() {
                         <Badge className={`text-xs ${getRoleBadgeColor(invitation.role)}`}>
                           {invitation.role.toLowerCase()}
                         </Badge>
-                        <Badge variant="outline" className="text-xs text-yellow-600 border-yellow-300">
+                        <Badge variant="outline" className="text-xs text-yellow-600 dark:text-yellow-400 border-yellow-300 dark:border-yellow-600">
                           pending
                         </Badge>
                         <span className="text-xs text-muted-foreground">

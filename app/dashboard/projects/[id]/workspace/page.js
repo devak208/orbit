@@ -733,13 +733,24 @@ console.log(`🟢 [WORKSPACE] Excalidraw API exists: ${!!excalidrawAPI}`);
       <div className="flex-1 flex">
         
         {/* Collapsible Workspace Sidebar */}
-        <div className={`${workspacesPanelCollapsed ? 'w-12' : 'w-64'} border-r bg-gray-50 transition-all duration-300 ease-in-out relative`}>
+        <div 
+          className={`${workspacesPanelCollapsed ? 'w-12' : 'w-64'} border-r transition-all duration-300 ease-in-out relative`}
+          style={{
+            backgroundColor: currentTheme.colors.surface,
+            borderColor: currentTheme.colors.border
+          }}
+        >
           {/* Collapse/Expand Button */}
           <div className="absolute -right-3 top-4 z-10">
             <Button
               variant="outline"
               size="sm"
-              className="h-6 w-6 p-0 bg-white shadow-sm border rounded-full"
+              className="h-6 w-6 p-0 shadow-sm border rounded-full"
+              style={{
+                backgroundColor: currentTheme.colors.surface,
+                borderColor: currentTheme.colors.border,
+                color: currentTheme.colors.text
+              }}
               onClick={() => setWorkspacesPanelCollapsed(!workspacesPanelCollapsed)}
             >
               {workspacesPanelCollapsed ? (
@@ -753,18 +764,23 @@ console.log(`🟢 [WORKSPACE] Excalidraw API exists: ${!!excalidrawAPI}`);
           <div className="p-4">
             {!workspacesPanelCollapsed ? (
               <>
-                <h3 className="font-medium mb-4">Workspaces</h3>
+                <h3 className="font-medium mb-4" style={{ color: currentTheme.colors.text }}>Workspaces</h3>
                 
                 {workspaces.length === 0 ? (
                   <div className="text-center py-8">
-                    <FileImage className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <FileImage className="h-12 w-12 mx-auto mb-4" style={{ color: currentTheme.colors.textMuted }} />
+                    <p className="text-sm mb-4" style={{ color: currentTheme.colors.textMuted }}>
                       No workspaces yet
                     </p>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => setCreateDialogOpen(true)}
+                      style={{
+                        backgroundColor: currentTheme.components.button.secondary.bg,
+                        color: currentTheme.components.button.secondary.text,
+                        borderColor: currentTheme.colors.border
+                      }}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Create First Workspace
@@ -775,25 +791,33 @@ console.log(`🟢 [WORKSPACE] Excalidraw API exists: ${!!excalidrawAPI}`);
                     {workspaces.map((workspace) => (
                       <Card 
                         key={workspace.id}
-                        className={`cursor-pointer transition-colors ${
-                          currentWorkspace?.id === workspace.id 
-                            ? 'ring-2 ring-blue-500 bg-blue-50' 
-                            : 'hover:bg-gray-100'
-                        }`}
+                        className="cursor-pointer transition-colors"
+                        style={{
+                          backgroundColor: currentWorkspace?.id === workspace.id 
+                            ? currentTheme.colors.accent + '20'
+                            : currentTheme.colors.background,
+                          borderColor: currentWorkspace?.id === workspace.id 
+                            ? currentTheme.colors.accent 
+                            : currentTheme.colors.border,
+                          borderWidth: currentWorkspace?.id === workspace.id ? '2px' : '1px'
+                        }}
                         onClick={() => setCurrentWorkspace(workspace)}
                       >
                         <CardContent className="p-3">
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium truncate">{workspace.name}</h4>
-                              <p className="text-xs text-muted-foreground">
+                              <h4 className="font-medium truncate" style={{ color: currentTheme.colors.text }}>{workspace.name}</h4>
+                              <p className="text-xs" style={{ color: currentTheme.colors.textMuted }}>
                                 Updated {new Date(workspace.updatedAt).toLocaleDateString()}
                               </p>
                             </div>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:opacity-80"
+                              style={{
+                                color: currentTheme.colors.textMuted
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleDeleteWorkspace(workspace.id)
@@ -810,17 +834,27 @@ console.log(`🟢 [WORKSPACE] Excalidraw API exists: ${!!excalidrawAPI}`);
               </>
             ) : (
               <div className="flex flex-col items-center space-y-2">
-                <div className="p-2 rounded-lg bg-blue-100 text-blue-600" title="Workspaces">
+                <div 
+                  className="p-2 rounded-lg" 
+                  title="Workspaces"
+                  style={{
+                    backgroundColor: currentTheme.colors.accent + '20',
+                    color: currentTheme.colors.accent
+                  }}
+                >
                   <FileImage className="h-4 w-4" />
                 </div>
                 {workspaces.slice(0, 3).map((workspace) => (
                   <div
                     key={workspace.id}
-                    className={`w-8 h-8 rounded-md cursor-pointer flex items-center justify-center text-xs font-medium text-white transition-all ${
-                      currentWorkspace?.id === workspace.id
-                        ? 'ring-2 ring-blue-500 bg-blue-600'
-                        : 'bg-gray-400 hover:bg-gray-500'
-                    }`}
+                    className="w-8 h-8 rounded-md cursor-pointer flex items-center justify-center text-xs font-medium text-white transition-all"
+                    style={{
+                      backgroundColor: currentWorkspace?.id === workspace.id
+                        ? currentTheme.colors.accent
+                        : currentTheme.colors.textMuted,
+                      borderColor: currentWorkspace?.id === workspace.id ? currentTheme.colors.accent : 'transparent',
+                      borderWidth: currentWorkspace?.id === workspace.id ? '2px' : '0'
+                    }}
                     onClick={() => setCurrentWorkspace(workspace)}
                     title={workspace.name}
                   >
@@ -828,14 +862,14 @@ console.log(`🟢 [WORKSPACE] Excalidraw API exists: ${!!excalidrawAPI}`);
                   </div>
                 ))}
                 {workspaces.length > 3 && (
-                  <div className="text-xs text-muted-foreground">+{workspaces.length - 3}</div>
+                  <div className="text-xs" style={{ color: currentTheme.colors.textMuted }}>+{workspaces.length - 3}</div>
                 )}
               </div>
             )}
           </div>
         </div>
 
-{/* Excalidraw Canvas */}
+        {/* Excalidraw Canvas */}
         <div className="flex-1" style={{ minHeight: 0 }}>
           {currentWorkspace ? (
             <div style={{ width: '100%', height: '100%' }}>
@@ -911,118 +945,6 @@ console.log(`🟢 [WORKSPACE] Excalidraw API exists: ${!!excalidrawAPI}`);
           )}
         </div>
         
-        {/* Profile and Library Panel */}
-        <div 
-          className="w-64 border-l flex flex-col overflow-hidden"
-          style={{
-            backgroundColor: currentTheme.colors.surface,
-            borderColor: currentTheme.colors.border
-          }}
-        >
-          {/* Profile Panel */}
-          <div className="p-4 border-b" style={{ borderColor: currentTheme.colors.border }}>
-            <h3 className="font-medium mb-3" style={{ color: currentTheme.colors.text }}>Collaborators</h3>
-            
-            {/* Current User */}
-            <div className="mb-3">
-              <div 
-                className="flex items-center gap-3 p-2 rounded-lg"
-                style={{ backgroundColor: currentTheme.colors.background }}
-              >
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
-                  style={{ backgroundColor: currentTheme.colors.accent }}
-                >
-                  {session?.user?.name?.charAt(0).toUpperCase() || 'You'}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium" style={{ color: currentTheme.colors.text }}>
-                    {session?.user?.name || 'You'}
-                  </p>
-                  <p className="text-xs" style={{ color: currentTheme.colors.textMuted }}>Owner</p>
-                </div>
-                <div 
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: isConnected ? currentTheme.colors.success : currentTheme.colors.danger }}
-                ></div>
-              </div>
-            </div>
-            
-            {/* Other Collaborators */}
-            <div className="space-y-2">
-              {Array.from(collaborators.entries()).map(([collaboratorId, collaborator]) => {
-                if (collaboratorId === session?.user?.id) return null
-                
-                return (
-                  <div 
-                    key={collaboratorId}
-                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all hover:opacity-80 ${
-                      followingUser === collaboratorId ? 'ring-2' : ''
-                    }`}
-                    style={{
-                      backgroundColor: followingUser === collaboratorId 
-                        ? currentTheme.colors.accent + '20' 
-                        : currentTheme.colors.background,
-                      ringColor: followingUser === collaboratorId ? currentTheme.colors.accent : 'transparent'
-                    }}
-                    onClick={() => handleFollowUser(collaboratorId, collaborator)}
-                    title={`Click to follow ${collaborator.username || 'User'}`}
-                  >
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white relative"
-                      style={{ backgroundColor: collaborator.color || currentTheme.colors.accent }}
-                    >
-                      {(collaborator.username || 'U').charAt(0).toUpperCase()}
-                      {followingUser === collaboratorId && (
-                        <MousePointer2 
-                          className="absolute -top-1 -right-1 h-3 w-3" 
-                          style={{ color: currentTheme.colors.accent }}
-                        />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium" style={{ color: currentTheme.colors.text }}>
-                        {collaborator.username || 'Anonymous User'}
-                      </p>
-                      <p className="text-xs" style={{ color: currentTheme.colors.textMuted }}>Collaborator</p>
-                      {followingUser === collaboratorId && (
-                        <p className="text-xs" style={{ color: currentTheme.colors.accent }}>Following</p>
-                      )}
-                    </div>
-                    <div 
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: currentTheme.colors.success }}
-                    ></div>
-                  </div>
-                )
-              })}
-              
-              {collaborators.size === 0 && (
-                <div className="text-center py-4">
-                  <Users className="h-8 w-8 mx-auto mb-2" style={{ color: currentTheme.colors.textMuted }} />
-                  <p className="text-sm" style={{ color: currentTheme.colors.textMuted }}>No collaborators online</p>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Library Panel */}
-          <div className="flex-1 p-4">
-            <h3 className="font-medium mb-3" style={{ color: currentTheme.colors.text }}>Library</h3>
-            <div className="text-center py-12">
-              <div 
-                className="w-16 h-16 rounded-lg mx-auto mb-4 flex items-center justify-center"
-                style={{ backgroundColor: currentTheme.colors.background }}
-              >
-                <FileImage className="h-8 w-8" style={{ color: currentTheme.colors.textMuted }} />
-              </div>
-              <p className="text-sm mb-2" style={{ color: currentTheme.colors.text }}>Shape Library</p>
-              <p className="text-xs" style={{ color: currentTheme.colors.textMuted }}>
-                Custom shapes and templates will appear here
-              </p>
-            </div>
-          </div>
-        </div>
 
       </div>
     </div>
