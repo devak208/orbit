@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Hash,
   Activity,
+  Bell,
   Zap
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -147,6 +148,11 @@ export function Sidebar({ collapsed, onToggle, currentPath }) {
       href: '/dashboard/projects',
       icon: FolderOpen,
       label: 'All Projects',
+    },
+    {
+      href: '/dashboard/notifications/test',
+      icon: Bell,
+      label: 'Notification Test',
     },
     {
       href: '/dashboard/team',

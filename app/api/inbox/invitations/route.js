@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../../../lib/auth'
 import { prisma } from '../../../../lib/db'
+import { notificationService } from '../../../../lib/notificationService'
 
 export async function POST(request) {
   try {
@@ -56,13 +57,24 @@ export async function POST(request) {
           data: { status: 'ACCEPTED' }
         })
 
-        // 3. Update inbox item status
+        // 3. Clean up related notifications and inbox items
         await tx.inboxItem.updateMany({
           where: {
             type: 'PROJECT_INVITATION',
+            userId: user.id,
             metadata: { path: ['invitationId'], equals: invitationId }
           },
           data: { status: 'ARCHIVED' }
+        })
+
+        // Also mark any related notifications as read
+        await tx.notification.updateMany({
+          where: {
+            userId: user.id,
+            type: 'PROJECT_INVITATION',
+            metadata: { path: ['invitationId'], equals: invitationId }
+          },
+          data: { isRead: true }
         })
 
         // 4. Create an activity log entry
@@ -76,24 +88,18 @@ export async function POST(request) {
         })
       })
 
+      // Use notification service to handle acceptance cleanup
+      await notificationService.handleInvitationAccepted(invitationId, user.id)
+
       return NextResponse.json({ message: 'Invitation accepted successfully!' })
     } else { // action === 'reject'
-      await prisma.$transaction(async (tx) => {
-        // 1. Update invitation status
-        await tx.invitation.update({
-          where: { id: invitationId },
-          data: { status: 'DECLINED' }
-        })
-
-        // 2. Update inbox item status
-        await tx.inboxItem.updateMany({
-          where: {
-            type: 'PROJECT_INVITATION',
-            metadata: { path: ['invitationId'], equals: invitationId }
-          },
-          data: { status: 'ARCHIVED' }
-        })
+      await prisma.invitation.update({
+        where: { id: invitationId },
+        data: { status: 'DECLINED' }
       })
+
+      // Use notification service to handle rejection cleanup
+      await notificationService.handleInvitationRejected(invitationId, user.id)
 
       return NextResponse.json({ message: 'Invitation rejected' })
     }

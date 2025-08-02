@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '../../../../../lib/db'
+import { notificationService } from '../../../../../lib/notificationService'
 
 export async function POST(request, { params }) {
   try {
@@ -58,19 +59,43 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'User is already a member of this project' }, { status: 400 })
     }
 
-    // Check for pending invitation
+    // Check for pending invitation (only block if PENDING)
     const existingInvitation = await prisma.invitation.findFirst({
       where: {
         projectId: params.id,
-        email
+        email,
+        status: 'PENDING',
+        expiresAt: { gt: new Date() } // Only consider non-expired pending invitations
       }
     })
 
     if (existingInvitation) {
-      return NextResponse.json({ error: 'An invitation has already been sent to this email address' }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'A pending invitation has already been sent to this email address' 
+      }, { status: 400 })
     }
 
-    // Create invitation and inbox item in a transaction
+    // Clean up any expired or rejected/declined invitations before creating new one
+    await prisma.invitation.deleteMany({
+      where: {
+        projectId: params.id,
+        email,
+        OR: [
+          { status: { in: ['DECLINED', 'EXPIRED'] } },
+          { 
+            status: 'PENDING',
+            expiresAt: { lt: new Date() } // Expired pending invitations
+          }
+        ]
+      }
+    })
+
+    // Find the invited user to get their ID
+    const invitedUser = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    // Create invitation and notification in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create invitation
       const invitation = await tx.invitation.create({
@@ -83,33 +108,24 @@ export async function POST(request, { params }) {
         }
       })
 
-      // Find the invited user if they exist
-      const invitedUser = await tx.user.findUnique({
-        where: { email }
-      })
-
-      // Create inbox item if the user exists
-      if (invitedUser) {
-        await tx.inboxItem.create({
-          data: {
-            title: `Project Invitation: ${project.name}`,
-            content: `${user.name || user.email} invited you to join the project "${project.name}" as a ${role || 'MEMBER'}.`,
-            type: 'PROJECT_INVITATION',
-            status: 'ACTIVE',
-            userId: invitedUser.id,
-            metadata: {
-              invitationId: invitation.id,
-              projectId: params.id,
-              projectName: project.name,
-              inviterId: user.id,
-              role: role || 'MEMBER'
-            }
-          }
-        })
-      }
-
       return invitation
     })
+
+    // If the invited user exists, create notification using the service
+    if (invitedUser) {
+      await notificationService.notifyProjectInvitation({
+        inviterId: user.id,
+        inviteeId: invitedUser.id,
+        projectId: params.id,
+        projectName: project.name,
+        role: role || 'MEMBER',
+        invitationId: result.id // Pass the invitation ID
+      })
+    } else {
+      // For users not yet registered, create a simple inbox item
+      console.log(`📧 Would send email invitation to ${email} for project ${project.name}`)
+      // TODO: Implement email service here
+    }
 
     return NextResponse.json({ invitation: result }, { status: 201 })
 
@@ -184,32 +200,10 @@ export async function DELETE(request, { params }) {
       await tx.invitation.delete({
         where: { id: invitationId }
       })
-
-      // Find and delete related inbox items
-      const inboxItems = await tx.inboxItem.findMany({
-        where: {
-          type: 'PROJECT_INVITATION'
-        }
-      })
-      
-      // Filter items that match the invitation ID in metadata
-      const itemsToDelete = inboxItems.filter(item => 
-        item.metadata && 
-        typeof item.metadata === 'object' && 
-        item.metadata.invitationId === invitationId
-      )
-      
-      // Delete the matching items
-      if (itemsToDelete.length > 0) {
-        await tx.inboxItem.deleteMany({
-          where: {
-            id: {
-              in: itemsToDelete.map(item => item.id)
-            }
-          }
-        })
-      }
     })
+
+    // Use notification service to handle cancellation cleanup
+    await notificationService.handleInvitationCancelled(invitationId, params.id)
 
     return NextResponse.json({ message: 'Invitation cancelled successfully' })
 

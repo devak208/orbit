@@ -12,6 +12,19 @@ try {
   prisma = null
 }
 
+// Notification management
+const userSockets = new Map() // userId -> Set of socketIds for notification delivery
+
+// Environment configuration
+const PORT = process.env.PORT || 3001
+const NODE_ENV = process.env.NODE_ENV || 'development'
+const CORS_ORIGIN = NODE_ENV === 'production' 
+  ? [process.env.NEXT_PUBLIC_BASE_URL, process.env.NEXTAUTH_URL].filter(Boolean)
+  : ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+console.log(`🚀 WebSocket server starting in ${NODE_ENV} mode`)
+console.log(`📡 CORS origins:`, CORS_ORIGIN)
+
 // Add connection test
 if (prisma) {
   prisma.$connect()
@@ -34,8 +47,9 @@ const httpServer = createServer()
 
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.NEXTAUTH_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: CORS_ORIGIN,
+    methods: ["GET", "POST"],
+    credentials: true
   }
 })
 
@@ -68,6 +82,56 @@ function getWorkspaceDocument(workspaceId) {
 io.on('connection', (socket) => {
   console.log('🔗 Client connected:', socket.id)
   console.log('📊 Total clients:', io.engine.clientsCount)
+
+  // User connection handling for notifications
+  socket.on('user-connect', (data) => {
+    const { userId } = data
+    if (userId) {
+      socket.userId = userId
+      
+      // Track user sockets for notifications
+      if (!userSockets.has(userId)) {
+        userSockets.set(userId, new Set())
+      }
+      userSockets.get(userId).add(socket.id)
+      
+      console.log(`👤 User ${userId} connected on socket ${socket.id}`)
+    }
+  })
+
+  // Handle notification events
+  socket.on('user-notification', (data) => {
+    const { userId, notification, inboxItem, type } = data
+    
+    // Send to all user's connected sockets
+    if (userSockets.has(userId)) {
+      const userSocketIds = userSockets.get(userId)
+      userSocketIds.forEach(socketId => {
+        io.to(socketId).emit('notification-received', {
+          notification,
+          inboxItem,
+          type,
+          timestamp: new Date().toISOString()
+        })
+      })
+      console.log(`🔔 Notification sent to user ${userId} on ${userSocketIds.size} sockets`)
+    }
+  })
+
+  // Handle notification read status updates
+  socket.on('notifications-read', (data) => {
+    const { userId, notificationIds } = data
+    
+    if (userSockets.has(userId)) {
+      const userSocketIds = userSockets.get(userId)
+      userSocketIds.forEach(socketId => {
+        io.to(socketId).emit('notifications-read-update', {
+          notificationIds,
+          timestamp: new Date().toISOString()
+        })
+      })
+    }
+  })
 
   // Handle joining a workspace room
   socket.on('join-workspace', async (data) => {
@@ -287,6 +351,18 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id)
     
+    // Clean up user notification tracking
+    if (socket.userId) {
+      const userSocketSet = userSockets.get(socket.userId)
+      if (userSocketSet) {
+        userSocketSet.delete(socket.id)
+        if (userSocketSet.size === 0) {
+          userSockets.delete(socket.userId)
+        }
+      }
+      console.log(`👤 User ${socket.userId} disconnected from socket ${socket.id}`)
+    }
+    
     if (socket.workspaceId) {
       // Check if disconnecting user had edit lock
       const currentLock = workspaceLocks.get(socket.workspaceId)
@@ -315,9 +391,9 @@ io.on('connection', (socket) => {
   })
 })
 
-const PORT = process.env.WS_PORT || 3001
 httpServer.listen(PORT, () => {
-  console.log(`WebSocket server running on port ${PORT}`)
+  console.log(`🌐 WebSocket server running on port ${PORT}`)
+  console.log(`🔗 Environment: ${NODE_ENV}`)
 })
 
 // Graceful shutdown
