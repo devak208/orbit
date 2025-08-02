@@ -9,14 +9,7 @@
         "build": "next build",
         "start": "next start",
         "ws:dev": "node websocket-server-simple.js",
-        "dev:all": "concurrently \"npm run dev\" \"npm run ws:dev\"",
-        "docker:build": "docker build -t orbit-app .",
-        "docker:build:ws": "docker build -f Dockerfile.websocket -t orbit-websocket .",
-        "docker:run": "docker run -p 3000:3000 orbit-app",
-        "docker:compose:up": "docker-compose up --build",
-        "docker:compose:down": "docker-compose down",
-        "docker:compose:logs": "docker-compose logs -f",
-        "docker:clean": "docker system prune -a"
+        "dev:all": "concurrently \"npm run dev\" \"npm run ws:dev\""
     },
     "dependencies": {
         "@auth/prisma-adapter": "^2.10.0",
